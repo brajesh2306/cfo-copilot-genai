@@ -60,33 +60,66 @@ async def handle_unexpected_error(request: Request, exc: Exception):
 MAX_CONCURRENT_REQUESTS = max(
     1, int(os.getenv("MAX_CONCURRENT_REQUESTS", "16"))
 )
+MAX_QUEUED_REQUESTS = max(
+    0, int(os.getenv("MAX_QUEUED_REQUESTS", "32"))
+)
+QUEUE_WAIT_TIMEOUT_SECONDS = max(
+    0.01, float(os.getenv("QUEUE_WAIT_TIMEOUT_SECONDS", "1"))
+)
+
 _active_requests = 0
-_request_lock = asyncio.Lock()
+_queued_requests = 0
+_request_condition = asyncio.Condition()
+
+
+def service_busy_response(request_id: str) -> JSONResponse:
+    return JSONResponse(
+        status_code=503,
+        headers={
+            "Retry-After": "1",
+            "X-Request-ID": request_id,
+        },
+        content={
+            "detail": {
+                "code": "SERVICE_BUSY",
+                "message": "Server is busy. Retry the request shortly.",
+            },
+            "request_id": request_id,
+        },
+    )
 
 
 @app.middleware("http")
 async def add_request_id(request: Request, call_next):
-    global _active_requests
+    global _active_requests, _queued_requests
 
     request_id = request.headers.get("X-Request-ID") or str(uuid4())
     request.state.request_id = request_id
 
-    async with _request_lock:
+    async with _request_condition:
         if _active_requests >= MAX_CONCURRENT_REQUESTS:
-            return JSONResponse(
-                status_code=503,
-                headers={
-                    "Retry-After": "1",
-                    "X-Request-ID": request_id,
-                },
-                content={
-                    "detail": {
-                        "code": "SERVICE_BUSY",
-                        "message": "Server is busy. Retry the request shortly.",
-                    },
-                    "request_id": request_id,
-                },
-            )
+            if _queued_requests >= MAX_QUEUED_REQUESTS:
+                return service_busy_response(request_id)
+
+            _queued_requests += 1
+            try:
+                await asyncio.wait_for(
+                    _request_condition.wait_for(
+                        lambda: _active_requests < MAX_CONCURRENT_REQUESTS
+                    ),
+                    timeout=QUEUE_WAIT_TIMEOUT_SECONDS,
+                )
+            except asyncio.TimeoutError:
+                _queued_requests -= 1
+                _request_condition.notify_all()
+                return service_busy_response(request_id)
+            except BaseException:
+                _queued_requests -= 1
+                _request_condition.notify_all()
+                raise
+            else:
+                _queued_requests -= 1
+
         _active_requests += 1
 
     try:
@@ -94,8 +127,9 @@ async def add_request_id(request: Request, call_next):
         response.headers["X-Request-ID"] = request_id
         return response
     finally:
-        async with _request_lock:
+        async with _request_condition:
             _active_requests -= 1
+            _request_condition.notify_all()
 
 class IngestResponse(BaseModel): status: str
 class KPIRequest(BaseModel): company_id: str = Field(min_length=1); fiscal_year: int; fiscal_quarter: int = Field(ge=1, le=4)

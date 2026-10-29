@@ -88,6 +88,171 @@ def test_validation_error_has_standard_body_and_request_id():
     assert data["request_id"]
     assert response.headers["X-Request-ID"] == data["request_id"]
 
+
+def test_queued_request_runs_after_active_request_finishes():
+    import asyncio
+    from starlette.requests import Request
+    from starlette.responses import Response
+    import app.api as api
+
+    async def run_test():
+        first_entered = asyncio.Event()
+        release_first = asyncio.Event()
+        second_entered = asyncio.Event()
+
+        scope = {
+            "type": "http",
+            "asgi": {"version": "3.0"},
+            "http_version": "1.1",
+            "method": "GET",
+            "scheme": "http",
+            "path": "/api/v1/health",
+            "raw_path": b"/api/v1/health",
+            "query_string": b"",
+            "root_path": "",
+            "headers": [],
+            "client": ("testclient", 123),
+            "server": ("testserver", 80),
+        }
+
+        original_limit = api.MAX_CONCURRENT_REQUESTS
+        original_queue_limit = api.MAX_QUEUED_REQUESTS
+        original_timeout = api.QUEUE_WAIT_TIMEOUT_SECONDS
+        original_active = api._active_requests
+        original_queued = api._queued_requests
+
+        api.MAX_CONCURRENT_REQUESTS = 1
+        api.MAX_QUEUED_REQUESTS = 1
+        api.QUEUE_WAIT_TIMEOUT_SECONDS = 2
+        api._active_requests = 0
+        api._queued_requests = 0
+
+        async def first_handler(request):
+            first_entered.set()
+            await release_first.wait()
+            return Response("first")
+
+        async def second_handler(request):
+            second_entered.set()
+            return Response("second")
+
+        try:
+            first_task = asyncio.create_task(
+                api.add_request_id(Request(dict(scope)), first_handler)
+            )
+            await asyncio.wait_for(first_entered.wait(), timeout=1)
+
+            second_task = asyncio.create_task(
+                api.add_request_id(Request(dict(scope)), second_handler)
+            )
+
+            for _ in range(100):
+                if api._queued_requests == 1:
+                    break
+                await asyncio.sleep(0.01)
+
+            assert api._queued_requests == 1
+            assert not second_entered.is_set()
+
+            release_first.set()
+            first_response, second_response = await asyncio.wait_for(
+                asyncio.gather(first_task, second_task), timeout=2
+            )
+
+            assert first_response.status_code == 200
+            assert second_response.status_code == 200
+            assert second_entered.is_set()
+            assert api._active_requests == 0
+            assert api._queued_requests == 0
+        finally:
+            release_first.set()
+            api.MAX_CONCURRENT_REQUESTS = original_limit
+            api.MAX_QUEUED_REQUESTS = original_queue_limit
+            api.QUEUE_WAIT_TIMEOUT_SECONDS = original_timeout
+            api._active_requests = original_active
+            api._queued_requests = original_queued
+
+    asyncio.run(run_test())
+
+
+def test_queued_request_timeout_returns_503_and_releases_queue_slot():
+    import asyncio
+    import json
+    from starlette.requests import Request
+    from starlette.responses import Response
+    import app.api as api
+
+    async def run_test():
+        first_entered = asyncio.Event()
+        release_first = asyncio.Event()
+
+        scope = {
+            "type": "http",
+            "asgi": {"version": "3.0"},
+            "http_version": "1.1",
+            "method": "GET",
+            "scheme": "http",
+            "path": "/api/v1/health",
+            "raw_path": b"/api/v1/health",
+            "query_string": b"",
+            "root_path": "",
+            "headers": [],
+            "client": ("testclient", 123),
+            "server": ("testserver", 80),
+        }
+
+        original_limit = api.MAX_CONCURRENT_REQUESTS
+        original_queue_limit = api.MAX_QUEUED_REQUESTS
+        original_timeout = api.QUEUE_WAIT_TIMEOUT_SECONDS
+        original_active = api._active_requests
+        original_queued = api._queued_requests
+        original_condition = api._request_condition
+        api._request_condition = asyncio.Condition()
+
+        api.MAX_CONCURRENT_REQUESTS = 1
+        api.MAX_QUEUED_REQUESTS = 1
+        api.QUEUE_WAIT_TIMEOUT_SECONDS = 0.05
+        api._active_requests = 0
+        api._queued_requests = 0
+
+        async def first_handler(request):
+            first_entered.set()
+            await release_first.wait()
+            return Response("first")
+
+        async def second_handler(request):
+            return Response("unexpected")
+
+        try:
+            first_task = asyncio.create_task(
+                api.add_request_id(Request(dict(scope)), first_handler)
+            )
+            await asyncio.wait_for(first_entered.wait(), timeout=1)
+
+            second_response = await api.add_request_id(
+                Request(dict(scope)), second_handler
+            )
+
+            assert second_response.status_code == 503
+            assert second_response.headers.get("Retry-After") == "1"
+            assert json.loads(second_response.body)["detail"]["code"] == "SERVICE_BUSY"
+            assert api._queued_requests == 0
+            assert api._active_requests == 1
+
+            release_first.set()
+            await asyncio.wait_for(first_task, timeout=1)
+            assert api._active_requests == 0
+        finally:
+            release_first.set()
+            api.MAX_CONCURRENT_REQUESTS = original_limit
+            api.MAX_QUEUED_REQUESTS = original_queue_limit
+            api.QUEUE_WAIT_TIMEOUT_SECONDS = original_timeout
+            api._active_requests = original_active
+            api._queued_requests = original_queued
+            api._request_condition = original_condition
+
+    asyncio.run(run_test())
+
 def test_overload_returns_503_and_retry_after():
     import asyncio
     from types import SimpleNamespace
@@ -118,9 +283,13 @@ def test_overload_returns_503_and_retry_after():
         second_request = Request(dict(scope))
 
         original_limit = api.MAX_CONCURRENT_REQUESTS
+        original_queue_limit = api.MAX_QUEUED_REQUESTS
         original_active = api._active_requests
+        original_queued = api._queued_requests
         api.MAX_CONCURRENT_REQUESTS = 1
+        api.MAX_QUEUED_REQUESTS = 0
         api._active_requests = 0
+        api._queued_requests = 0
 
         async def slow_call_next(request):
             entered.set()
@@ -150,6 +319,8 @@ def test_overload_returns_503_and_retry_after():
         finally:
             release.set()
             api.MAX_CONCURRENT_REQUESTS = original_limit
+            api.MAX_QUEUED_REQUESTS = original_queue_limit
             api._active_requests = original_active
+            api._queued_requests = original_queued
 
     asyncio.run(run_test())
