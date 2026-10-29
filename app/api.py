@@ -1,9 +1,102 @@
-from fastapi import FastAPI, HTTPException
+import asyncio
+import os
+import logging
+from fastapi import FastAPI, HTTPException, Request
+from fastapi.exceptions import RequestValidationError
+from fastapi.responses import JSONResponse
+from uuid import uuid4
 from pydantic import BaseModel, Field
 from app.services.financials import database_initialized, initialize_db, ingest_all, list_companies, compute_kpis
 from app.services.retrieval import retrieve
 
 app = FastAPI(title='CFO Copilot API', version='v1')
+
+logger = logging.getLogger("cfo_copilot.api")
+
+
+@app.exception_handler(HTTPException)
+async def handle_http_exception(request: Request, exc: HTTPException):
+    return JSONResponse(
+        status_code=exc.status_code,
+        headers=exc.headers,
+        content={
+            "detail": exc.detail,
+            "request_id": getattr(request.state, "request_id", None),
+        },
+    )
+
+
+@app.exception_handler(RequestValidationError)
+async def handle_validation_error(request: Request, exc: RequestValidationError):
+    return JSONResponse(
+        status_code=422,
+        content={
+            "detail": {
+                "code": "REQUEST_VALIDATION_FAILED",
+                "message": "Request input is invalid.",
+                "errors": exc.errors(),
+            },
+            "request_id": getattr(request.state, "request_id", None),
+        },
+    )
+
+
+@app.exception_handler(Exception)
+async def handle_unexpected_error(request: Request, exc: Exception):
+    request_id = getattr(request.state, "request_id", "unknown")
+    logger.exception("Unhandled API error request_id=%s", request_id)
+    return JSONResponse(
+        status_code=500,
+        content={
+            "detail": {
+                "code": "INTERNAL_SERVER_ERROR",
+                "message": "An unexpected error occurred.",
+            },
+            "request_id": request_id,
+        },
+    )
+
+
+MAX_CONCURRENT_REQUESTS = max(
+    1, int(os.getenv("MAX_CONCURRENT_REQUESTS", "16"))
+)
+_active_requests = 0
+_request_lock = asyncio.Lock()
+
+
+@app.middleware("http")
+async def add_request_id(request: Request, call_next):
+    global _active_requests
+
+    request_id = request.headers.get("X-Request-ID") or str(uuid4())
+    request.state.request_id = request_id
+
+    async with _request_lock:
+        if _active_requests >= MAX_CONCURRENT_REQUESTS:
+            return JSONResponse(
+                status_code=503,
+                headers={
+                    "Retry-After": "1",
+                    "X-Request-ID": request_id,
+                },
+                content={
+                    "detail": {
+                        "code": "SERVICE_BUSY",
+                        "message": "Server is busy. Retry the request shortly.",
+                    },
+                    "request_id": request_id,
+                },
+            )
+        _active_requests += 1
+
+    try:
+        response = await call_next(request)
+        response.headers["X-Request-ID"] = request_id
+        return response
+    finally:
+        async with _request_lock:
+            _active_requests -= 1
+
 class IngestResponse(BaseModel): status: str
 class KPIRequest(BaseModel): company_id: str = Field(min_length=1); fiscal_year: int; fiscal_quarter: int = Field(ge=1, le=4)
 

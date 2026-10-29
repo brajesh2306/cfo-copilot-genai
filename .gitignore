@@ -9,3 +9,7 @@ app/data/*.db
 models/
 
 evals/*.backup.py
+
+# Local safety backups
+*.backup
+*.concurrency-backup

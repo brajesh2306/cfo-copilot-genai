@@ -61,3 +61,95 @@ def test_chat_rejects_unknown_company():
 
     assert response.status_code == 404
     assert response.json()["detail"]["code"] == "COMPANY_NOT_FOUND"
+
+
+
+def test_request_id_is_returned():
+    response = client.get("/api/v1/health")
+
+    assert response.status_code == 200
+    assert response.headers.get("X-Request-ID")
+
+
+def test_validation_error_has_standard_body_and_request_id():
+    response = client.post(
+        "/api/v1/chat",
+        json={
+            "company_id": "NWI",
+            "fiscal_year": 2024,
+            "fiscal_quarter": 9,
+            "question": "gross margin",
+        },
+    )
+
+    assert response.status_code == 422
+    data = response.json()
+    assert data["detail"]["code"] == "REQUEST_VALIDATION_FAILED"
+    assert data["request_id"]
+    assert response.headers["X-Request-ID"] == data["request_id"]
+
+def test_overload_returns_503_and_retry_after():
+    import asyncio
+    from types import SimpleNamespace
+    from starlette.requests import Request
+    from starlette.responses import Response
+    import app.api as api
+
+    async def run_test():
+        entered = asyncio.Event()
+        release = asyncio.Event()
+
+        scope = {
+            "type": "http",
+            "asgi": {"version": "3.0"},
+            "http_version": "1.1",
+            "method": "GET",
+            "scheme": "http",
+            "path": "/api/v1/health",
+            "raw_path": b"/api/v1/health",
+            "query_string": b"",
+            "root_path": "",
+            "headers": [],
+            "client": ("testclient", 123),
+            "server": ("testserver", 80),
+        }
+
+        first_request = Request(dict(scope))
+        second_request = Request(dict(scope))
+
+        original_limit = api.MAX_CONCURRENT_REQUESTS
+        original_active = api._active_requests
+        api.MAX_CONCURRENT_REQUESTS = 1
+        api._active_requests = 0
+
+        async def slow_call_next(request):
+            entered.set()
+            await release.wait()
+            return Response("ok")
+
+        try:
+            first_task = asyncio.create_task(
+                api.add_request_id(first_request, slow_call_next)
+            )
+            await entered.wait()
+
+            async def fast_call_next(request):
+                return Response("unexpected")
+
+            second_response = await api.add_request_id(
+                second_request, fast_call_next
+            )
+            assert second_response.status_code == 503
+            assert second_response.headers.get("Retry-After") == "1"
+            assert second_response.headers.get("X-Request-ID")
+            import json
+            assert json.loads(second_response.body)["detail"]["code"] == "SERVICE_BUSY"
+
+            release.set()
+            await first_task
+        finally:
+            release.set()
+            api.MAX_CONCURRENT_REQUESTS = original_limit
+            api._active_requests = original_active
+
+    asyncio.run(run_test())
