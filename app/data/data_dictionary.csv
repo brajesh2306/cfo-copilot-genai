@@ -1,0 +1,67 @@
+file,column,description
+puzzle1_data/financial_statements_raw.csv,row_id,Unique id of this extracted row
+puzzle1_data/financial_statements_raw.csv,company_id,Company code (see companies.csv)
+puzzle1_data/financial_statements_raw.csv,filing_id,Filing the row was extracted from (see filings_index.csv)
+puzzle1_data/financial_statements_raw.csv,statement,"IS = income statement, BS = balance sheet, CF = cash flow"
+puzzle1_data/financial_statements_raw.csv,line_item_raw,Line item label exactly as printed in the filing
+puzzle1_data/financial_statements_raw.csv,fiscal_year,Fiscal year label as the company uses it
+puzzle1_data/financial_statements_raw.csv,fiscal_quarter,Fiscal quarter 1-4
+puzzle1_data/financial_statements_raw.csv,period_start,First day of the quarter
+puzzle1_data/financial_statements_raw.csv,period_end,Last day of the quarter (balance sheet rows are as of this date)
+puzzle1_data/financial_statements_raw.csv,value,"Value as extracted, in the stated unit"
+puzzle1_data/financial_statements_raw.csv,unit,Unit label attached by the extraction tool
+puzzle1_data/financial_statements_raw.csv,currency,Currency code
+puzzle1_data/filings_index.csv,filing_id,Unique filing id
+puzzle1_data/filings_index.csv,company_id,Company code
+puzzle1_data/filings_index.csv,form_type,"SEC-style form type (10-K, 10-Q, 10-Q/A)"
+puzzle1_data/filings_index.csv,fiscal_year,Fiscal year label
+puzzle1_data/filings_index.csv,fiscal_quarter,Fiscal quarter
+puzzle1_data/filings_index.csv,period_end,Period end date
+puzzle1_data/filings_index.csv,filed_date,Date the filing was filed
+puzzle1_data/filings_index.csv,doc_id,Key into corpus_documents.csv
+puzzle1_data/filings_index.csv,reporting_unit,Unit stated in the filing
+puzzle1_data/companies.csv,company_id,Company code
+puzzle1_data/companies.csv,name,Company name
+puzzle1_data/companies.csv,sector,Sector
+puzzle1_data/companies.csv,reporting_currency,Reporting currency
+puzzle1_data/companies.csv,fiscal_year_note,How the company defines its fiscal year
+puzzle1_data/kpi_glossary.csv,kpi_id,Stable KPI identifier
+puzzle1_data/kpi_glossary.csv,kpi_name,Display name
+puzzle1_data/kpi_glossary.csv,formula,Authoritative formula
+puzzle1_data/kpi_glossary.csv,unit,"percent, x (ratio) or USD"
+puzzle1_data/kpi_glossary.csv,notes,Additional rules
+puzzle1_data/corpus_documents.csv,doc_id,Unique document id (filing_id for filings)
+puzzle1_data/corpus_documents.csv,doc_type,filing or other_document
+puzzle1_data/corpus_documents.csv,company_id,Company the document relates to
+puzzle1_data/corpus_documents.csv,form_type,Form type (filings only)
+puzzle1_data/corpus_documents.csv,fiscal_year,Fiscal year label (filings only)
+puzzle1_data/corpus_documents.csv,fiscal_quarter,Fiscal quarter (filings only)
+puzzle1_data/corpus_documents.csv,filed_date,Filing date (filings only)
+puzzle1_data/corpus_documents.csv,title,Document title
+puzzle1_data/corpus_documents.csv,text,"Full document text, including any tables in markdown form"
+puzzle2_data/request_log.csv,request_id,Unique request id
+puzzle2_data/request_log.csv,ts,Request timestamp
+puzzle2_data/request_log.csv,tenant,Tenant that sent the request
+puzzle2_data/request_log.csv,session_id,Chat session id
+puzzle2_data/request_log.csv,user,User display name
+puzzle2_data/request_log.csv,engine,Serving engine and cache settings
+puzzle2_data/request_log.csv,prompt_tokens,Prompt length in whitespace tokens
+puzzle2_data/request_log.csv,cached_tokens,Prompt tokens served from the prefix cache
+puzzle2_data/request_log.csv,ttft_ms,Time to first token in milliseconds
+puzzle2_data/request_log.csv,system_instructions ... user_query,Prompt segments in the order they were concatenated (left to right)
+puzzle2_data/reference_hardware_and_model.csv,parameter / value / unit / note,One reference figure per row
+puzzle3_data/starter_test_cases.csv,case_id,Case id
+puzzle3_data/starter_test_cases.csv,case_type,"normal, context_conflict or missing_data"
+puzzle3_data/starter_test_cases.csv,context,Facts handed to the model
+puzzle3_data/starter_test_cases.csv,question,Question asked
+puzzle3_data/starter_test_cases.csv,expected_answer,"Expected answer, or REFUSE when the data is missing"
+puzzle3_data/starter_test_cases.csv,expected_behaviour,What a correct system does
+puzzle4_data/dev_questions.csv,id,Question id
+puzzle4_data/dev_questions.csv,category,"structured, unstructured, mixed, unanswerable or hostile_user"
+puzzle4_data/dev_questions.csv,question,The user question
+puzzle4_data/dev_questions.csv,expected_route,"sql, rag, both or none"
+puzzle4_data/dev_questions.csv,expected_answer,Expected answer text (REFUSE for questions that must be declined)
+puzzle4_data/dev_questions.csv,numeric_answer,Expected numeric value where applicable
+puzzle4_data/dev_questions.csv,tolerance_rel,Relative tolerance for numeric answers
+puzzle4_data/dev_questions.csv,expected_source_hint,Where the answer comes from
+puzzle4_data/dev_questions.csv,expected_behaviour,Expected behaviour for refusals

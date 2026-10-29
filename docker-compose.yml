@@ -1,0 +1,55 @@
+
+services:
+  mysql:
+    image: mysql:8.0
+    environment:
+      MYSQL_DATABASE: cfo_copilot
+      MYSQL_USER: cfo_user
+      MYSQL_PASSWORD: cfo_password_change_me
+      MYSQL_ROOT_PASSWORD: local_root_password_change_me
+    ports:
+      - "3307:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+    healthcheck:
+      test:
+        - CMD
+        - mysqladmin
+        - ping
+        - -h
+        - 127.0.0.1
+        - -u
+        - cfo_user
+        - -pcfo_password_change_me
+      interval: 5s
+      timeout: 3s
+      retries: 30
+
+  ui:
+    build: .
+    command: streamlit run app/main.py --server.address=0.0.0.0 --server.port=8501
+    ports:
+      - "8501:8501"
+    depends_on:
+      mysql:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: mysql+pymysql://cfo_user:cfo_password_change_me@mysql:3306/cfo_copilot
+      MODEL_CONTEXT_TOKENS: "8192"
+      MAX_CONCURRENT_REQUESTS: "16"
+
+  api:
+    build: .
+    command: uvicorn app.api:app --host 0.0.0.0 --port 8000
+    ports:
+      - "8000:8000"
+    depends_on:
+      mysql:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: mysql+pymysql://cfo_user:cfo_password_change_me@mysql:3306/cfo_copilot
+      MODEL_CONTEXT_TOKENS: "8192"
+      MAX_CONCURRENT_REQUESTS: "16"
+
+volumes:
+  mysql_data:

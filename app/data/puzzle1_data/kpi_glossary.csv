@@ -1,0 +1,17 @@
+kpi_id,kpi_name,formula,unit,notes
+gross_margin_pct,Gross margin,gross_profit / revenue * 100,percent,"Quarterly, not annualised"
+operating_margin_pct,Operating margin,operating_income / revenue * 100,percent,Quarterly
+net_margin_pct,Net margin,net_income / revenue * 100,percent,Quarterly
+ebitda_usd,EBITDA,operating_income + depreciation_and_amortization,USD,In whole US dollars. No other add-backs.
+ebitda_margin_pct,EBITDA margin,ebitda / revenue * 100,percent,Uses EBITDA as defined above
+current_ratio_x,Current ratio,total_current_assets / total_current_liabilities,x,At period end
+debt_to_equity_x,Debt to equity,total_debt / total_equity,x,At period end
+roe_quarterly_pct,Return on equity (quarterly),net_income / total_equity(period end) * 100,percent,"Quarterly, not annualised"
+free_cash_flow_usd,Free cash flow,cash_from_operations - capital_expenditures,USD,Capex taken as a positive outflow amount
+fcf_margin_pct,Free cash flow margin,free_cash_flow / revenue * 100,percent,Quarterly
+revenue_yoy_growth_pct,"Revenue growth, year over year",(revenue / revenue same fiscal quarter prior fiscal year - 1) * 100,percent,Not defined for the first four quarters in the data
+opex_ratio_pct,Operating expense ratio,(research_and_development + sales_and_marketing + general_and_administrative) / revenue * 100,percent,Excludes restructuring
+interest_coverage_x,Interest coverage,operating_income / interest_expense,x,Interest expense as a positive amount
+asset_turnover_x,Asset turnover (quarterly),revenue / total_assets(period end),x,"Quarterly, not annualised"
+rd_intensity_pct,R&D intensity,research_and_development / revenue * 100,percent,Zero where the company reports no R&D
+working_capital_usd,Working capital,total_current_assets - total_current_liabilities,USD,At period end

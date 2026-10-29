@@ -1,0 +1,6 @@
+company_id,name,sector,reporting_currency,fiscal_year_note
+NWI,Northwind Industrial Corp,Industrial machinery,USD,Our fiscal year coincides with the calendar year ending December 31.
+ARG,Aurora Retail Group,Specialty retail,USD,"Our fiscal year ends on the Saturday closest to January 31. Fiscal 2024 began on February 1, 2023 and ended on January 31, 2024. Fiscal quarters are 13-week periods; the fourth quarter includes the holiday season."
+HBS,Helix BioSystems,Life-science instruments,USD,"Our fiscal year begins on July 1 and ends on June 30. We designate each fiscal year by the calendar year in which it BEGINS; accordingly, fiscal 2023 began on July 1, 2023 and ends on June 30, 2024."
+MSI,Meridian Software Inc.,Enterprise software,USD,Our fiscal year coincides with the calendar year ending December 31.
+CEP,Cobalt Energy Partners,Energy midstream and upstream,USD,Our fiscal year coincides with the calendar year ending December 31.

@@ -1,0 +1,15 @@
+parameter,value,unit,note
+gpu_vram,6,GB,Deployment target
+reserved_for_activations_and_runtime,1.5,GB,Not available to the KV cache
+reference_model,"reference-3B-instruct (GQA), pre-built 4-bit weights",,Example only; you choose your own model
+reference_model_params,3.1,billion,
+reference_model_weights_4bit,2.0,GB,
+reference_model_layers,28,count,
+reference_model_kv_heads,8,count,Grouped-query attention
+reference_model_head_dim,128,count,
+kv_dtype_default,fp16,,2 bytes per value
+max_context_tokens,4096,tokens,
+kv_block_size,16,tokens,Serving-engine block size used in the request log
+concurrent_sessions_target,16,sessions,
+p95_ttft_target,2000,ms,
+token_counts_in_request_log,whitespace tokens,,"Approximation, not a model tokenizer"
