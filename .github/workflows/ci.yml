@@ -1,0 +1,60 @@
+﻿name: CFO Copilot CI
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+    branches: [main, master]
+  workflow_dispatch:
+
+concurrency:
+  group: cfo-copilot-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    name: Python tests with MySQL
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    services:
+      mysql:
+        image: mysql:8.0
+        env:
+          MYSQL_DATABASE: cfo_copilot
+          MYSQL_USER: cfo_user
+          MYSQL_PASSWORD: cfo_password_change_me
+          MYSQL_ROOT_PASSWORD: local_root_password_change_me
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mysqladmin ping -h 127.0.0.1 -uroot -plocal_root_password_change_me"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=10
+
+    env:
+      DATABASE_URL: mysql+pymysql://cfo_user:cfo_password_change_me@127.0.0.1:3306/cfo_copilot
+      PYTHONUNBUFFERED: "1"
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.10'
+          cache: pip
+
+      - name: Upgrade pip
+        run: python -m pip install --upgrade pip
+
+      - name: Install dependencies
+        run: python -m pip install -r requirements.txt
+
+      - name: Initialize database and ingest supplied data
+        run: python -c "from app.services.financials import initialize_db, ingest_all; initialize_db(); ingest_all()"
+
+      - name: Run test suite
+        run: python -m pytest -q

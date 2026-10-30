@@ -1,12 +1,12 @@
-
+﻿
 services:
   mysql:
     image: mysql:8.0
     environment:
-      MYSQL_DATABASE: cfo_copilot
-      MYSQL_USER: cfo_user
-      MYSQL_PASSWORD: cfo_password_change_me
-      MYSQL_ROOT_PASSWORD: local_root_password_change_me
+      MYSQL_DATABASE: ${MYSQL_DATABASE:?Set MYSQL_DATABASE in .env}
+      MYSQL_USER: ${MYSQL_USER:?Set MYSQL_USER in .env}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD:?Set MYSQL_PASSWORD in .env}
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:?Set MYSQL_ROOT_PASSWORD in .env}
     ports:
       - "3307:3306"
     volumes:
@@ -20,7 +20,7 @@ services:
         - 127.0.0.1
         - -u
         - cfo_user
-        - -pcfo_password_change_me
+        - -p${MYSQL_PASSWORD:?Set MYSQL_PASSWORD in .env}
       interval: 5s
       timeout: 3s
       retries: 30
@@ -34,26 +34,29 @@ services:
       mysql:
         condition: service_healthy
     environment:
-      DATABASE_URL: mysql+pymysql://cfo_user:cfo_password_change_me@mysql:3306/cfo_copilot
-      MODEL_CONTEXT_TOKENS: "8192"
-      MAX_CONCURRENT_REQUESTS: "16"
-      MAX_QUEUED_REQUESTS: "32"
-      QUEUE_WAIT_TIMEOUT_SECONDS: "1"
+      API_BASE_URL: http://api:8000
+      DATABASE_URL: mysql+pymysql://${MYSQL_USER:?Set MYSQL_USER in .env}:${MYSQL_PASSWORD:?Set MYSQL_PASSWORD in .env}@mysql:3306/${MYSQL_DATABASE:?Set MYSQL_DATABASE in .env}
+      MODEL_CONTEXT_TOKENS: "${MODEL_CONTEXT_TOKENS:-8192}"
+      MAX_CONCURRENT_REQUESTS: "${MAX_CONCURRENT_REQUESTS:-16}"
+      MAX_QUEUED_REQUESTS: "${MAX_QUEUED_REQUESTS:-32}"
+      QUEUE_WAIT_TIMEOUT_SECONDS: "${QUEUE_WAIT_TIMEOUT_SECONDS:-1}"
 
   api:
     build: .
     command: uvicorn app.api:app --host 0.0.0.0 --port 8000
     ports:
-      - "8000:8000"
+      - "8001:8000"
     depends_on:
       mysql:
         condition: service_healthy
     environment:
-      DATABASE_URL: mysql+pymysql://cfo_user:cfo_password_change_me@mysql:3306/cfo_copilot
-      MODEL_CONTEXT_TOKENS: "8192"
-      MAX_CONCURRENT_REQUESTS: "16"
-      MAX_QUEUED_REQUESTS: "32"
-      QUEUE_WAIT_TIMEOUT_SECONDS: "1"
+      DATABASE_URL: mysql+pymysql://${MYSQL_USER:?Set MYSQL_USER in .env}:${MYSQL_PASSWORD:?Set MYSQL_PASSWORD in .env}@mysql:3306/${MYSQL_DATABASE:?Set MYSQL_DATABASE in .env}
+      MODEL_CONTEXT_TOKENS: "${MODEL_CONTEXT_TOKENS:-8192}"
+      MAX_CONCURRENT_REQUESTS: "${MAX_CONCURRENT_REQUESTS:-16}"
+      MAX_QUEUED_REQUESTS: "${MAX_QUEUED_REQUESTS:-32}"
+      QUEUE_WAIT_TIMEOUT_SECONDS: "${QUEUE_WAIT_TIMEOUT_SECONDS:-1}"
+      CFO_MODEL: ${CFO_MODEL:-ollama_chat/llama3.2:1b}
+      OLLAMA_BASE_URL: ${OLLAMA_BASE_URL:-http://host.docker.internal:11434}
 
 volumes:
   mysql_data:

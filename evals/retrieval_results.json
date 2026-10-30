@@ -19,8 +19,8 @@
   ],
   "recall_at_5": 0.5555555555555556,
   "mrr_at_5": 0.38333333333333336,
-  "mean_latency_ms": 11.59,
-  "p95_latency_ms": 16.02,
+  "mean_latency_ms": 9.99,
+  "p95_latency_ms": 13.8,
   "results": [
     {
       "case_id": "dev-01",
@@ -43,7 +43,7 @@
       "relevant_rank": null,
       "recall_at_5": 0,
       "reciprocal_rank": 0,
-      "latency_ms": 15.03
+      "latency_ms": 13.8
     },
     {
       "case_id": "dev-02",
@@ -66,7 +66,7 @@
       "relevant_rank": 1,
       "recall_at_5": 1,
       "reciprocal_rank": 1.0,
-      "latency_ms": 11.09
+      "latency_ms": 10.49
     },
     {
       "case_id": "dev-03",
@@ -89,7 +89,7 @@
       "relevant_rank": null,
       "recall_at_5": 0,
       "reciprocal_rank": 0,
-      "latency_ms": 11.9
+      "latency_ms": 9.92
     },
     {
       "case_id": "dev-04",
@@ -112,7 +112,7 @@
       "relevant_rank": null,
       "recall_at_5": 0,
       "reciprocal_rank": 0,
-      "latency_ms": 11.19
+      "latency_ms": 9.3
     },
     {
       "case_id": "dev-05",
@@ -135,7 +135,7 @@
       "relevant_rank": 2,
       "recall_at_5": 1,
       "reciprocal_rank": 0.5,
-      "latency_ms": 13.34
+      "latency_ms": 9.21
     },
     {
       "case_id": "dev-06",
@@ -158,7 +158,7 @@
       "relevant_rank": 5,
       "recall_at_5": 1,
       "reciprocal_rank": 0.2,
-      "latency_ms": 11.05
+      "latency_ms": 9.21
     },
     {
       "case_id": "dev-07",
@@ -181,7 +181,7 @@
       "relevant_rank": null,
       "recall_at_5": 0,
       "reciprocal_rank": 0,
-      "latency_ms": 10.29
+      "latency_ms": 7.95
     },
     {
       "case_id": "dev-08",
@@ -204,7 +204,7 @@
       "relevant_rank": 5,
       "recall_at_5": 1,
       "reciprocal_rank": 0.2,
-      "latency_ms": 10.62
+      "latency_ms": 8.06
     },
     {
       "case_id": "dev-09",
@@ -227,7 +227,7 @@
       "relevant_rank": null,
       "recall_at_5": 0,
       "reciprocal_rank": 0,
-      "latency_ms": 9.83
+      "latency_ms": 10.21
     },
     {
       "case_id": "dev-10",
@@ -250,7 +250,7 @@
       "relevant_rank": 1,
       "recall_at_5": 1,
       "reciprocal_rank": 1.0,
-      "latency_ms": 9.9
+      "latency_ms": 10.15
     },
     {
       "case_id": "dev-11",
@@ -273,7 +273,7 @@
       "relevant_rank": 2,
       "recall_at_5": 1,
       "reciprocal_rank": 0.5,
-      "latency_ms": 12.49
+      "latency_ms": 10.88
     },
     {
       "case_id": "dev-12",
@@ -296,7 +296,7 @@
       "relevant_rank": null,
       "recall_at_5": 0,
       "reciprocal_rank": 0,
-      "latency_ms": 9.6
+      "latency_ms": 10.6
     },
     {
       "case_id": "dev-13",
@@ -319,7 +319,7 @@
       "relevant_rank": null,
       "recall_at_5": 0,
       "reciprocal_rank": 0,
-      "latency_ms": 8.51
+      "latency_ms": 10.33
     },
     {
       "case_id": "dev-14",
@@ -342,7 +342,7 @@
       "relevant_rank": null,
       "recall_at_5": 0,
       "reciprocal_rank": 0,
-      "latency_ms": 9.13
+      "latency_ms": 10.25
     },
     {
       "case_id": "dev-15",
@@ -365,7 +365,7 @@
       "relevant_rank": 2,
       "recall_at_5": 1,
       "reciprocal_rank": 0.5,
-      "latency_ms": 12.38
+      "latency_ms": 9.79
     },
     {
       "case_id": "dev-16",
@@ -388,7 +388,7 @@
       "relevant_rank": 1,
       "recall_at_5": 1,
       "reciprocal_rank": 1.0,
-      "latency_ms": 13.3
+      "latency_ms": 9.77
     },
     {
       "case_id": "dev-17",
@@ -411,7 +411,7 @@
       "relevant_rank": 1,
       "recall_at_5": 1,
       "reciprocal_rank": 1.0,
-      "latency_ms": 16.02
+      "latency_ms": 11.12
     },
     {
       "case_id": "dev-18",
@@ -434,7 +434,7 @@
       "relevant_rank": 1,
       "recall_at_5": 1,
       "reciprocal_rank": 1.0,
-      "latency_ms": 13.01
+      "latency_ms": 8.84
     },
     {
       "case_id": "dev-19",

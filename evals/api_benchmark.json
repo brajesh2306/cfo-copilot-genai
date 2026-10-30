@@ -1,0 +1,34 @@
+[
+    {
+        "Endpoint":  "health",
+        "Status":  "OK",
+        "Requests":  10,
+        "MeanMs":  8.01,
+        "P50Ms":  2.91,
+        "P95Ms":  52.54
+    },
+    {
+        "Endpoint":  "companies",
+        "Status":  "OK",
+        "Requests":  10,
+        "MeanMs":  42.59,
+        "P50Ms":  4.25,
+        "P95Ms":  386.52
+    },
+    {
+        "Endpoint":  "kpis",
+        "Status":  "OK",
+        "Requests":  10,
+        "MeanMs":  78.46,
+        "P50Ms":  56.95,
+        "P95Ms":  304.68
+    },
+    {
+        "Endpoint":  "chat",
+        "Status":  "OK",
+        "Requests":  10,
+        "MeanMs":  1541.65,
+        "P50Ms":  65.97,
+        "P95Ms":  14810.32
+    }
+]

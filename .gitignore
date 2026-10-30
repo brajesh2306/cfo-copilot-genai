@@ -13,3 +13,32 @@ evals/*.backup.py
 # Local safety backups
 *.backup
 *.concurrency-backup
+
+# Local audit and inventory files
+PROJECT_AUDIT.txt
+project_inventory.txt
+
+# Temporary patch and inspection scripts
+/add_evaluation_cases.py
+/apply_final_fixes.py
+/apply_remaining_fixes.py
+/apply_resolver_patch.py
+/fix_revenue_routing.py
+/fix_security_callback.py
+/inspect_interest_coverage.py
+/patch_security_routing.py
+/test_adk_agent.py
+
+# Temporary backups and editor settings
+*.pre-*_backup
+*.pre-*.jsonl
+*.pre-*.csv
+.vscode/
+
+# Additional temporary working backups
+*.pre-sse-backup
+*.pre_*_backup
+
+# Agent working backups
+app/agents/*.pre_*
+app/agents/*-backup

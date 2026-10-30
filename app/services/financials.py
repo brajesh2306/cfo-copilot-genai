@@ -578,12 +578,22 @@ def compute_kpis(company_id, year, quarter):
         if numerator not in values or denominator not in values:
             return None, []
 
-        if values[denominator] == 0:
+        denominator_value = values[denominator]
+
+        if denominator == "interest_expense":
+            denominator_value = abs(denominator_value)
+
+        if denominator_value == 0:
             return None, []
 
         result = (
-            values[numerator] / values[denominator]
+            values[numerator] / denominator_value
         ) * multiplier
+
+        return result, [
+            sources[numerator],
+            sources[denominator],
+        ]
 
         return result, [
             sources[numerator],
